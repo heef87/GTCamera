@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.serenegiant.usb.widget.UVCCameraTextureView
+            android:id="@+id/camera_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center" />
+    </FrameLayout>
+
+
+    <RadioGroup
+        android:id="@+id/camera_mode_select"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
+        android:background="@android:color/transparent"
+        android:gravity="center">
+
+        <RadioButton
+            android:id="@+id/camera_capture"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:button="@drawable/ic_capture_camera_select"
+            android:checked="true"></RadioButton>
+
+        <RadioButton
+            android:id="@+id/camera_video"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:button="@drawable/ic_video_camera_select"></RadioButton>
+
+    </RadioGroup>
+
+    <Chronometer
+        android:id="@+id/time_chronometer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20dp"
+        android:paddingRight="20dp"
+        android:layout_alignParentBottom="true"
+        android:layout_toLeftOf="@+id/camera_take_layout"
+        android:textColor="@android:color/holo_red_light"
+        android:textStyle="bold"
+        android:visibility="invisible" />
+
+    <LinearLayout
+        android:id="@+id/camera_take_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="right"
+        android:visibility="invisible"
+        android:layout_alignParentRight="true"
+        android:background="#78000000"
+        android:orientation="vertical">
+
+        <ImageButton
+            android:id="@+id/camera_options"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@null"
+            android:padding="10dp"
+            android:src="@mipmap/ic_capture_options"></ImageButton>
+
+        <ImageButton
+            android:id="@+id/camera_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@null"
+            android:padding="10dp"
+            android:src="@drawable/ic_switch_camera"
+            android:visibility="invisible"></ImageButton>
+
+        <ImageButton
+            android:id="@+id/camera_cation"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:background="@null"
+            android:padding="10dp"
+            android:src="@drawable/ic_capture_camera"></ImageButton>
+
+        <ImageButton
+            android:id="@+id/camera_scence"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@null"
+            android:padding="10dp"
+            android:src="@drawable/ic_scene_camera"></ImageButton>
+    </LinearLayout>
+</RelativeLayout>

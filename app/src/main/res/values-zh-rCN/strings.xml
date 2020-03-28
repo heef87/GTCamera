@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">相机</string>
+    <string name="camare_recording">"正在录像..."</string>
+</resources>
