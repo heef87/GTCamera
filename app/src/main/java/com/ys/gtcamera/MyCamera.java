@@ -156,12 +156,6 @@ public class MyCamera implements CameraViewInterface.Callback {
                 new AbstractUVCCameraHandler.OnCaptureListener() {
                     @Override
                     public void onCaptureResult(String path) {
-                        try {
-                            MediaStore.Images.Media.insertImage(mActivity.getContentResolver(),
-                                    CameraStoreger.getPicturePath() + File.separator + filaName, filaName, null);
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                        }
                         mActivity.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(new File(path))));
                     }
                 });
