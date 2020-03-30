@@ -269,7 +269,7 @@ public class CameraFragment extends Fragment implements RadioGroup.OnCheckedChan
         mMyCamera.release();
         mMyCamera = null;
         mMyCamera = new MyCamera(getActivity(), viewInterface, index);
-//        mMyCamera.setCameraCallback(this);
+        mMyCamera.setCameraCallback(this);
         mMyCamera.register();
     }
 
