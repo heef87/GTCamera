@@ -10,6 +10,9 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 
+import com.jiangdg.usbcamera.utils.ScreentUtils;
+import com.libyuv.util.YuvUtil;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -38,11 +41,13 @@ public class H264EncodeConsumer extends Thread {
     private MediaFormat mFormat;
     private static String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/test2.h264";
     private BufferedOutputStream outputStream;
-    final int millisPerframe = 1000 / 20;
+    final int millisPerframe = 1000 / 50;
     long lastPush = 0;
     private OnH264EncodeResultListener listener;
     private int mWidth;
     private int mHeight;
+    private int mDegree;
+    private boolean isMirror;
     private MediaFormat newFormat;
     private WeakReference<Mp4MediaMuxer> mMuxerRef;
     private boolean isAddKeyFrame = false;
@@ -55,10 +60,15 @@ public class H264EncodeConsumer extends Thread {
     public void setOnH264EncodeResultListener(OnH264EncodeResultListener listener) {
         this.listener = listener;
     }
-
     public H264EncodeConsumer(int width, int height) {
+      this(width,height,0,false);
+    }
+
+    public H264EncodeConsumer(int width, int height,int degree,boolean isMirror) {
         this.mWidth = width;
         this.mHeight = height;
+        mDegree = degree;
+        this.isMirror = isMirror;
     }
 
     public synchronized void setTmpuMuxer(Mp4MediaMuxer mMuxer) {
@@ -91,9 +101,22 @@ public class H264EncodeConsumer extends Thread {
                     Thread.sleep(time / 2);
             }
             // 将数据写入编码器
-
-            feedMediaCodecData(nv12ToNV21(yuvData, mWidth, mHeight));
-
+            byte[] dstData = new byte[yuvData.length];
+            boolean is90or270 = mDegree == 90 || mDegree == 270;
+            boolean isPort = ScreentUtils.isPort();
+            if (isPort) {
+                YuvUtil.yuvCompress(yuvData, mWidth, mHeight, dstData, is90or270 ? mWidth : mHeight,
+                        is90or270 ? mHeight : mWidth, 0, mDegree, isMirror);
+                int temp = mWidth;
+                mWidth = mHeight;
+                mHeight = temp;
+            }else{
+                YuvUtil.yuvCompress(yuvData, mWidth, mHeight, dstData, is90or270 ? mHeight : mWidth,
+                        is90or270 ? mWidth : mHeight, 0, mDegree, isMirror);
+            }
+            byte[] nv21Data = new byte[yuvData.length];
+            YuvUtil.yuvI420ToNV21(dstData,mWidth,mHeight,nv21Data);
+            feedMediaCodecData(nv21Data);
             if (time > 0)
                 Thread.sleep(time / 2);
             lastPush = System.currentTimeMillis();
@@ -242,11 +265,11 @@ public class H264EncodeConsumer extends Thread {
             Log.e(TAG, "Unable to find an appropriate codec for " + MIME_TYPE);
             return;
         }
-
-        final MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, mWidth, mHeight);
+        boolean isPort = ScreentUtils.isPort();
+        final MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE,isPort?mHeight:mWidth, isPort?mWidth:mHeight);
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, mColorFormat);
         format.setInteger(MediaFormat.KEY_BIT_RATE, calcBitRate());
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, 50);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
 
         try {
@@ -282,7 +305,7 @@ public class H264EncodeConsumer extends Thread {
         }
     }
 
-    private static final int FRAME_RATE = 15;
+    private static final int FRAME_RATE = 50;
     private static final float BPP = 0.50f;
 
     private int calcBitRate() {

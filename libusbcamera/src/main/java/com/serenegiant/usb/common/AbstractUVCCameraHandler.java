@@ -3,7 +3,6 @@ package com.serenegiant.usb.common;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -20,6 +19,8 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import com.jiangdg.usbcamera.utils.ScreentUtils;
+import com.libyuv.util.YuvUtil;
 import com.serenegiant.usb.IFrameCallback;
 import com.serenegiant.usb.Size;
 import com.serenegiant.usb.USBMonitor;
@@ -397,6 +398,8 @@ public abstract class AbstractUVCCameraHandler extends Handler {
         private final int mEncoderType;
         private final Set<CameraCallback> mCallbacks = new CopyOnWriteArraySet<CameraCallback>();
         private int mWidth, mHeight, mPreviewMode;
+        private int mDegree;//旋转的角度，90，180和270三种。切记，如果角度是90或270，则最终i420Dst数据的宽高会调换。
+        private boolean isMirror;
         private float mBandwidthFactor;
         private boolean mIsPreviewing;
         private boolean mIsRecording;
@@ -424,15 +427,20 @@ public abstract class AbstractUVCCameraHandler extends Handler {
          * encoderType 0表示使用MediaSurfaceEncoder;1表示使用MediaVideoEncoder, 2表示使用MediaVideoBufferEncoder
          * width  分辨率的宽
          * height 分辨率的高
+         * degree 旋转的角度，90，180和270三种。切记，如果角度是90或270，则最终i420Dst数据的宽高会调换。
+         * isMirror  是否镜像，一般只有270的时候才需要镜像
          * format 颜色格式，0为FRAME_FORMAT_YUYV；1为FRAME_FORMAT_MJPEG
          * bandwidthFactor
          */
         CameraThread(final Class<? extends AbstractUVCCameraHandler> clazz,
                      final Activity parent, final CameraViewInterface cameraView,
-                     final int encoderType, final int width, final int height, final int format,
+                     final int encoderType, final int width, final int height,
+                     final int degree, final boolean isMirror, final int format,
                      final float bandwidthFactor) {
 
             super("CameraThread");
+            mDegree = degree;
+            this.isMirror = isMirror;
             mHandlerClass = clazz;
             mEncoderType = encoderType;
             mWidth = width;
@@ -541,8 +549,8 @@ public abstract class AbstractUVCCameraHandler extends Handler {
                 mUVCCamera.setPreviewSize(mWidth, mHeight, 1, 31, mPreviewMode, mBandwidthFactor);
                 // 获取USB Camera预览数据，使用NV21颜色会失真
                 // 无论使用YUV还是MPEG，setFrameCallback的设置效果一致
-//				mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
-                mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_YUV420SP);
+                mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
+//                mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_YUV420SP);
             } catch (final IllegalArgumentException e) {
                 try {
                     // fallback to YUV mode
@@ -707,7 +715,7 @@ public abstract class AbstractUVCCameraHandler extends Handler {
         }
 
         private void startVideoRecord() {
-            mH264Consumer = new H264EncodeConsumer(getWidth(), getHeight());
+            mH264Consumer = new H264EncodeConsumer(getWidth(), getHeight(), mDegree, isMirror);
             mH264Consumer.setOnH264EncodeResultListener(new H264EncodeConsumer.OnH264EncodeResultListener() {
                 @Override
                 public void onEncodeResult(byte[] data, int offset, int length, long timestamp) {
@@ -822,9 +830,38 @@ public abstract class AbstractUVCCameraHandler extends Handler {
             }
         };
 
+        private byte[] nv12ToNV21(byte[] nv12, int width, int height) {
+            byte[] ret = new byte[width * height * 3 / 2];
+            int framesize = width * height;
+            int i = 0, j = 0;
+            // 拷贝Y分量
+            System.arraycopy(nv12, 0, ret, 0, framesize);
+            // 拷贝UV分量
+            for (j = framesize; j < nv12.length; j += 2) {
+                ret[j] = nv12[j + 1];
+                ret[j + 1] = nv12[j];
+            }
+            return ret;
+        }
+
         private void saveYuv2Jpeg(String path, byte[] data) {
-            YuvImage yuvImage = new YuvImage(data, ImageFormat.NV21, mWidth, mHeight, null);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream(data.length);
+            byte[] nv21Data = nv12ToNV21(data, mWidth, mHeight);
+            byte[] tempYuv = new byte[mWidth * mHeight * 3 / 2];
+            boolean is90or270 = mDegree == 90 || mDegree == 270;
+            boolean isPort = ScreentUtils.isPort();
+            if (isPort) {
+                YuvUtil.yuvCompress(nv21Data, mWidth, mHeight, tempYuv, is90or270 ? mWidth : mHeight,
+                        is90or270 ? mHeight : mWidth, 0, mDegree, isMirror);
+                int temp = mWidth;
+                mWidth = mHeight;
+                mHeight = temp;
+            }else{
+                YuvUtil.yuvCompress(nv21Data, mWidth, mHeight, tempYuv, is90or270 ? mHeight : mWidth,
+                        is90or270 ? mWidth : mHeight, 0, mDegree, isMirror);
+            }
+            YuvUtil.yuvI420ToNV21(tempYuv, mWidth, mHeight, nv21Data);
+            YuvImage yuvImage = new YuvImage(nv21Data, ImageFormat.NV21, mWidth, mHeight, null);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(nv21Data.length);
             boolean result = yuvImage.compressToJpeg(new Rect(0, 0, mWidth, mHeight), 100, bos);
             if (result) {
 

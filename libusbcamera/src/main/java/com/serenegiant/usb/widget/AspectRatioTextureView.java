@@ -24,9 +24,12 @@
 package com.serenegiant.usb.widget;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.TextureView;
 
+import com.jiangdg.usbcamera.utils.ScreentUtils;
 import com.serenegiant.widget.IAspectRatioView;
 
 /**
@@ -35,78 +38,81 @@ import com.serenegiant.widget.IAspectRatioView;
  * you can show this view in the center of screen and keep the aspect ratio of content
  * XXX it is better that can set the aspect ratio as xml property
  */
-public class AspectRatioTextureView extends TextureView	// API >= 14
-	implements IAspectRatioView {
+public class AspectRatioTextureView extends TextureView    // API >= 14
+        implements IAspectRatioView {
 
-	private static final boolean DEBUG = true;	// TODO set false on release
-	private static final String TAG = "AbstractCameraView";
+    private static final boolean DEBUG = true;    // TODO set false on release
+    private static final String TAG = "AbstractCameraView";
 
     private double mRequestedAspect = -1.0;
-	private CameraViewInterface.Callback mCallback;
+    private CameraViewInterface.Callback mCallback;
 
-	public AspectRatioTextureView(final Context context) {
-		this(context, null, 0);
-	}
+    public AspectRatioTextureView(final Context context) {
+        this(context, null, 0);
+    }
 
-	public AspectRatioTextureView(final Context context, final AttributeSet attrs) {
-		this(context, attrs, 0);
-	}
+    public AspectRatioTextureView(final Context context, final AttributeSet attrs) {
+        this(context, attrs, 0);
+    }
 
-	public AspectRatioTextureView(final Context context, final AttributeSet attrs, final int defStyle) {
-		super(context, attrs, defStyle);
-	}
+    public AspectRatioTextureView(final Context context, final AttributeSet attrs, final int defStyle) {
+        super(context, attrs, defStyle);
+    }
 
-	// 设置屏幕宽高比
-	@Override
+    // 设置屏幕宽高比
+    @Override
     public void setAspectRatio(final double aspectRatio) {
         if (aspectRatio < 0) {
             throw new IllegalArgumentException();
         }
         if (mRequestedAspect != aspectRatio) {
-            mRequestedAspect = aspectRatio;
+            boolean isPort = ScreentUtils.isPort();
+            if (isPort)
+                mRequestedAspect = 1 / aspectRatio;
+            else
+                mRequestedAspect = aspectRatio;
             requestLayout();
         }
     }
 
-	@Override
+    @Override
     public void setAspectRatio(final int width, final int height) {
-		setAspectRatio(width / (double)height);
+        setAspectRatio(width / (double) height);
     }
 
-	@Override
-	public double getAspectRatio() {
-		return mRequestedAspect;
-	}
+    @Override
+    public double getAspectRatio() {
+        return mRequestedAspect;
+    }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        if (mRequestedAspect > 0) {
+            int initialWidth = MeasureSpec.getSize(widthMeasureSpec);
+            int initialHeight = MeasureSpec.getSize(heightMeasureSpec);
+            final int horizPadding = getPaddingLeft() + getPaddingRight();
+            final int vertPadding = getPaddingTop() + getPaddingBottom();
+            initialWidth -= horizPadding;
+            initialHeight -= vertPadding;
 
-		if (mRequestedAspect > 0) {
-			int initialWidth = MeasureSpec.getSize(widthMeasureSpec);
-			int initialHeight = MeasureSpec.getSize(heightMeasureSpec);
+            final double viewAspectRatio = (double) initialWidth / initialHeight;
+            final double aspectDiff = mRequestedAspect / viewAspectRatio - 1;
 
-			final int horizPadding = getPaddingLeft() + getPaddingRight();
-			final int vertPadding = getPaddingTop() + getPaddingBottom();
-			initialWidth -= horizPadding;
-			initialHeight -= vertPadding;
-
-			final double viewAspectRatio = (double)initialWidth / initialHeight;
-			final double aspectDiff = mRequestedAspect / viewAspectRatio - 1;
-
-			if (Math.abs(aspectDiff) > 0.01) {
-				if (aspectDiff > 0) {
-					// width priority decision
-					initialHeight = (int) (initialWidth / mRequestedAspect);
-				} else {
-					// height priority decision
-					initialWidth = (int) (initialHeight * mRequestedAspect);
-				}
-				initialWidth += horizPadding;
-				initialHeight += vertPadding;
-				widthMeasureSpec = MeasureSpec.makeMeasureSpec(initialWidth, MeasureSpec.EXACTLY);
-				heightMeasureSpec = MeasureSpec.makeMeasureSpec(initialHeight, MeasureSpec.EXACTLY);
-			}
-		}
+//            if (Math.abs(aspectDiff) > 0.01) {
+            if (aspectDiff > 0) {
+                // width priority decision
+                initialHeight = (int) (initialWidth / mRequestedAspect);
+            } else {
+                // height priority decision
+                initialWidth = (int) (initialHeight * mRequestedAspect);
+            }
+            initialWidth += horizPadding;
+            initialHeight += vertPadding;
+            boolean rotation90Or270 = (getRotation() == 90 || getRotation() == 270);
+            widthMeasureSpec = MeasureSpec.makeMeasureSpec(rotation90Or270 ? initialHeight : initialWidth, MeasureSpec.EXACTLY);
+            heightMeasureSpec = MeasureSpec.makeMeasureSpec(rotation90Or270 ? initialWidth : initialHeight, MeasureSpec.EXACTLY);
+//            }
+        }
 
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }

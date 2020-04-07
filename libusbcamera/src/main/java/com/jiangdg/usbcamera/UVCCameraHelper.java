@@ -33,6 +33,8 @@ public class UVCCameraHelper {
     private static final String TAG = "UVCCameraHelper";
     private int previewWidth = 640;
     private int previewHeight = 480;
+    private int mDegree = 0;
+    private boolean isMirror = false;
     public static final int FRAME_FORMAT_YUYV = UVCCamera.FRAME_FORMAT_YUYV;
     // Default using MJPEG
     // if your device is connected,but have no images
@@ -195,13 +197,34 @@ public class UVCCameraHelper {
         // initialize camera handler
         mCamView.setAspectRatio(previewWidth / (float) previewHeight);
         mCameraHandler = UVCCameraHandler.createHandler(mActivity, mCamView, 2,
-                previewWidth, previewHeight, mFrameFormat);
+                previewWidth, previewHeight, mDegree, isMirror, mFrameFormat);
+    }
+
+    public void setMirror(boolean isMirror) {
+        mCamView.setMirror(isMirror);
+        updateConfig(previewWidth, previewHeight, mDegree, isMirror);
+    }
+
+    public void setDegree(int degree) {
+        mCamView.setDegree(degree);
+        updateConfig(previewWidth, previewHeight, degree, isMirror);
+    }
+
+    public void setDegreeAndMirror(int degree, boolean isMirror) {
+        updateConfig(previewWidth, previewHeight, degree, isMirror);
     }
 
     public void updateResolution(int width, int height) {
-        if (previewWidth == width && previewHeight == height) {
+        updateConfig(width, height, mDegree, isMirror);
+    }
+
+    public void updateConfig(int width, int height, int degree, boolean isMirror) {
+        if (previewWidth == width && previewHeight == height
+                && mDegree == degree && isMirror == this.isMirror) {
             return;
         }
+        mDegree = degree;
+        this.isMirror = isMirror;
         this.previewWidth = width;
         this.previewHeight = height;
         if (mCameraHandler != null) {
@@ -210,7 +233,7 @@ public class UVCCameraHelper {
         }
         mCamView.setAspectRatio(previewWidth / (float) previewHeight);
         mCameraHandler = UVCCameraHandler.createHandler(mActivity, mCamView, 2,
-                previewWidth, previewHeight, mFrameFormat);
+                previewWidth, previewHeight, mDegree, isMirror, mFrameFormat);
         openCamera(mCtrlBlock);
         new Thread(new Runnable() {
             @Override

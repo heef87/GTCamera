@@ -3,6 +3,7 @@ package com.jiangdg.usbcamera.utils;
 import android.util.Log;
 
 public class CameraUtil {
+
     public static byte[] rotateYUV420Degree270(byte[] data, int imageWidth,
                                                int imageHeight) {
         byte[] yuv = new byte[imageWidth * imageHeight * 3 / 2];

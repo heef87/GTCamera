@@ -30,111 +30,132 @@ import com.serenegiant.usb.widget.CameraViewInterface;
 
 public class UVCCameraHandler extends AbstractUVCCameraHandler {
 
-	/**
-	 * create UVCCameraHandler, use MediaVideoEncoder, try MJPEG, default bandwidth
-	 * @param parent
-	 * @param cameraView
-	 * @param width
-	 * @param height
-	 * @return
-	 */
-	public static final UVCCameraHandler createHandler(
-			final Activity parent, final CameraViewInterface cameraView,
-			final int width, final int height) {
+    /**
+     * create UVCCameraHandler, use MediaVideoEncoder, try MJPEG, default bandwidth
+     *
+     * @param parent
+     * @param cameraView
+     * @param width
+     * @param height
+     * @param degree     旋转的角度，90，180和270三种。切记，如果角度是90或270，则最终i420Dst数据的宽高会调换。
+     * @param isMirror   是否镜像，一般只有270的时候才需要镜像
+     * @return
+     */
+    public static final UVCCameraHandler createHandler(
+            final Activity parent, final CameraViewInterface cameraView,
+            final int width, final int height,
+            final int degree, final boolean isMirror) {
 
-		return createHandler(parent, cameraView, 1, width, height, UVCCamera.FRAME_FORMAT_MJPEG, UVCCamera.DEFAULT_BANDWIDTH);
-	}
+        return createHandler(parent, cameraView, 1, width, height, degree, isMirror, UVCCamera.FRAME_FORMAT_MJPEG, UVCCamera.DEFAULT_BANDWIDTH);
+    }
 
-	/**
-	 * create UVCCameraHandler, use MediaVideoEncoder, try MJPEG
-	 * @param parent
-	 * @param cameraView
-	 * @param width
-	 * @param height
-	 * @param bandwidthFactor
-	 * @return
-	 */
-	public static final UVCCameraHandler createHandler(
-			final Activity parent, final CameraViewInterface cameraView,
-			final int width, final int height, final float bandwidthFactor) {
+    /**
+     * create UVCCameraHandler, use MediaVideoEncoder, try MJPEG
+     *
+     * @param parent
+     * @param cameraView
+     * @param width
+     * @param height
+     * @param degree          旋转的角度，90，180和270三种。切记，如果角度是90或270，则最终i420Dst数据的宽高会调换。
+     * @param isMirror        是否镜像，一般只有270的时候才需要镜像
+     * @param bandwidthFactor
+     * @return
+     */
+    public static final UVCCameraHandler createHandler(
+            final Activity parent, final CameraViewInterface cameraView,
+            final int width, final int height,
+            final int degree, final boolean isMirror, final float bandwidthFactor) {
 
-		return createHandler(parent, cameraView, 1, width, height, UVCCamera.FRAME_FORMAT_MJPEG, bandwidthFactor);
-	}
+        return createHandler(parent, cameraView, 1, width, height, degree, isMirror, UVCCamera.FRAME_FORMAT_MJPEG, bandwidthFactor);
+    }
 
-	/**
-	 * create UVCCameraHandler, try MJPEG, default bandwidth
-	 * @param parent
-	 * @param cameraView
-	 * @param encoderType 0: use MediaSurfaceEncoder, 1: use MediaVideoEncoder, 2: use MediaVideoBufferEncoder
-	 * @param width
-	 * @param height
-	 * @return
-	 */
-	public static final UVCCameraHandler createHandler(
-			final Activity parent, final CameraViewInterface cameraView,
-			final int encoderType, final int width, final int height) {
+    /**
+     * create UVCCameraHandler, try MJPEG, default bandwidth
+     *
+     * @param parent
+     * @param cameraView
+     * @param encoderType 0: use MediaSurfaceEncoder, 1: use MediaVideoEncoder, 2: use MediaVideoBufferEncoder
+     * @param width
+     * @param height
+     * @param degree      旋转的角度，90，180和270三种。切记，如果角度是90或270，则最终i420Dst数据的宽高会调换。
+     * @param isMirror    是否镜像，一般只有270的时候才需要镜像
+     * @return
+     */
+    public static final UVCCameraHandler createHandler(
+            final Activity parent, final CameraViewInterface cameraView,
+            final int encoderType, final int width, final int height,
+            final int degree, final boolean isMirror) {
 
-		return createHandler(parent, cameraView, encoderType, width, height, UVCCamera.FRAME_FORMAT_MJPEG, UVCCamera.DEFAULT_BANDWIDTH);
-	}
+        return createHandler(parent, cameraView, encoderType, width, height, degree, isMirror, UVCCamera.FRAME_FORMAT_MJPEG, UVCCamera.DEFAULT_BANDWIDTH);
+    }
 
-	/**
-	 * create UVCCameraHandler, default bandwidth
-	 * @param parent
-	 * @param cameraView
-	 * @param encoderType 0: use MediaSurfaceEncoder, 1: use MediaVideoEncoder, 2: use MediaVideoBufferEncoder
-	 * @param width
-	 * @param height
-	 * @param format either UVCCamera.FRAME_FORMAT_YUYV(0) or UVCCamera.FRAME_FORMAT_MJPEG(1)
-	 * @return
-	 */
-	public static final UVCCameraHandler createHandler(
-			final Activity parent, final CameraViewInterface cameraView,
-			final int encoderType, final int width, final int height, final int format) {
+    /**
+     * create UVCCameraHandler, default bandwidth
+     *
+     * @param parent
+     * @param cameraView
+     * @param encoderType 0: use MediaSurfaceEncoder, 1: use MediaVideoEncoder, 2: use MediaVideoBufferEncoder
+     * @param width
+     * @param height
+     * @param degree      旋转的角度，90，180和270三种。切记，如果角度是90或270，则最终i420Dst数据的宽高会调换。
+     * @param isMirror    是否镜像，一般只有270的时候才需要镜像
+     * @param format      either UVCCamera.FRAME_FORMAT_YUYV(0) or UVCCamera.FRAME_FORMAT_MJPEG(1)
+     * @return
+     */
+    public static final UVCCameraHandler createHandler(
+            final Activity parent, final CameraViewInterface cameraView,
+            final int encoderType, final int width, final int height,
+            final int degree, final boolean isMirror, final int format) {
 
-		return createHandler(parent, cameraView, encoderType, width, height, format, UVCCamera.DEFAULT_BANDWIDTH);
-	}
+        return createHandler(parent, cameraView, encoderType, width, height, degree, isMirror, format, UVCCamera.DEFAULT_BANDWIDTH);
+    }
 
-	/**
-	 * create UVCCameraHandler
-	 * @param parent
-	 * @param cameraView
-	 * @param encoderType 0: use MediaSurfaceEncoder, 1: use MediaVideoEncoder, 2: use MediaVideoBufferEncoder
-	 * @param width
-	 * @param height
-	 * @param format either UVCCamera.FRAME_FORMAT_YUYV(0) or UVCCamera.FRAME_FORMAT_MJPEG(1)
-	 * @param bandwidthFactor
-	 * @return
-	 */
-	public static final UVCCameraHandler createHandler(
-			final Activity parent, final CameraViewInterface cameraView,
-			final int encoderType, final int width, final int height, final int format, final float bandwidthFactor) {
+    /**
+     * create UVCCameraHandler
+     *
+     * @param parent
+     * @param cameraView
+     * @param encoderType     0: use MediaSurfaceEncoder, 1: use MediaVideoEncoder, 2: use MediaVideoBufferEncoder
+     * @param width
+     * @param height
+     * @param degree          旋转的角度，90，180和270三种。切记，如果角度是90或270，则最终i420Dst数据的宽高会调换。
+     * @param isMirror        是否镜像，一般只有270的时候才需要镜像
+     * @param format          either UVCCamera.FRAME_FORMAT_YUYV(0) or UVCCamera.FRAME_FORMAT_MJPEG(1)
+     * @param bandwidthFactor
+     * @return
+     */
+    public static final UVCCameraHandler createHandler(
+            final Activity parent, final CameraViewInterface cameraView,
+            final int encoderType, final int width, final int height,
+            final int degree, final boolean isMirror, final int format, final float bandwidthFactor) {
 
-		final CameraThread thread = new CameraThread(UVCCameraHandler.class, parent, cameraView, encoderType, width, height, format, bandwidthFactor);
-		thread.start();
-		return (UVCCameraHandler)thread.getHandler();
-	}
+        final CameraThread thread = new CameraThread(UVCCameraHandler.class, parent, cameraView, encoderType, width, height,
+                degree, isMirror, format, bandwidthFactor);
+        thread.start();
+        return (UVCCameraHandler) thread.getHandler();
+    }
 
-	protected UVCCameraHandler(final CameraThread thread) {
-		super(thread);
-	}
+    protected UVCCameraHandler(final CameraThread thread) {
+        super(thread);
+    }
 
-	@Override
-	public void startPreview(final Object surface) {
-		super.startPreview(surface);
-	}
+    @Override
+    public void startPreview(final Object surface) {
+        super.startPreview(surface);
+    }
 
 //	@Override
 //	public void captureStill() {
 //		super.captureStill();
 //	}
 
-	@Override
-	public void captureStill(final String path,OnCaptureListener listener) {
-		super.captureStill(path,listener);
-	}
+    @Override
+    public void captureStill(final String path, OnCaptureListener listener) {
+        super.captureStill(path, listener);
+    }
 
-	@Override
-	public void startCameraFoucs() {
-		super.startCameraFoucs();
-	}
+    @Override
+    public void startCameraFoucs() {
+        super.startCameraFoucs();
+    }
 }
