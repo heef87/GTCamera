@@ -141,6 +141,13 @@ public class MyCamera implements CameraViewInterface.Callback {
     public boolean isCameraOpened() {
         return mCameraHelper != null && mCameraHelper.isCameraOpened();
     }
+    public void setMirror(boolean isMirror){
+        mCameraHelper.setMirror(isMirror);
+    }
+
+    public void setDegree(int degree){
+        mCameraHelper.setDegree(degree);
+    }
 
     public void updateResolution(int widht, int height) {
         mCameraHelper.updateResolution(widht, height);

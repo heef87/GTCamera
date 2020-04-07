@@ -32,6 +32,11 @@ import com.serenegiant.usb.common.AbstractUVCCameraHandler;
 import com.serenegiant.usb.widget.CameraViewInterface;
 import com.serenegiant.usb.widget.UVCCameraTextureView;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class CameraFragment extends Fragment implements RadioGroup.OnCheckedChangeListener, View.OnClickListener, AbstractUVCCameraHandler.CameraCallback {
     static final int FLAG_CAMERA_MODE_LAYOUT = 1001;
     private View mTakeLayout;
@@ -59,6 +64,7 @@ public class CameraFragment extends Fragment implements RadioGroup.OnCheckedChan
             return false;
         }
     });
+
 
     @Nullable
     @Override
@@ -139,13 +145,14 @@ public class CameraFragment extends Fragment implements RadioGroup.OnCheckedChan
     @Override
     public void onClick(View view) {
         if (view == mOptionButton) {
-            showResolutionListDialog();
+            List<String> list = Arrays.asList("分辨率", "旋转角度", "镜像");
+            showResolutionListDialog(list, 0);
         } else if (view == mSwitchButton) {
             switchCamare();
         } else if (view == mActionButton) {
             if (isCapture) {
                 mMyCamera.takePicture();
-                AlphaAnimation alphaAnimation = new AlphaAnimation(0.5f,1f);
+                AlphaAnimation alphaAnimation = new AlphaAnimation(0.5f, 1f);
                 alphaAnimation.setDuration(600);
                 alphaAnimation.setFillAfter(true);
                 mTextureView.startAnimation(alphaAnimation);
@@ -230,27 +237,54 @@ public class CameraFragment extends Fragment implements RadioGroup.OnCheckedChan
 
     }
 
-    private void showResolutionListDialog() {
+    private void showResolutionListDialog(List<String> textList, final int type) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         View rootView = LayoutInflater.from(getContext()).inflate(R.layout.layout_dialog_list, null);
         ListView listView = (ListView) rootView.findViewById(R.id.listview_dialog);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, mMyCamera.getResolutionList());
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_1, textList);
         if (adapter != null) {
             listView.setAdapter(adapter);
         }
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                if (!mMyCamera.isCameraOpened())
-                    return;
-                final String resolution = (String) adapterView.getItemAtPosition(position);
-                String[] tmp = resolution.split("x");
-                if (tmp != null && tmp.length >= 2) {
-                    int widht = Integer.valueOf(tmp[0]);
-                    int height = Integer.valueOf(tmp[1]);
-                    mMyCamera.updateResolution(widht, height);
+                if (type == 0) {
+                    destroyDialog();
+                    switch (position) {
+                        case 0:
+                            showResolutionListDialog(mMyCamera.getResolutionList(), 1);
+                            break;
+                        case 1:
+                            showResolutionListDialog(Arrays.asList("0", "90", "180", "270"), 2);
+                            break;
+                        case 2:
+                            showResolutionListDialog(Arrays.asList("镜像", "非镜像"), 3);
+                            break;
+                    }
+
+                } else if (type == 1) {
+                    if (!mMyCamera.isCameraOpened())
+                        return;
+                    final String resolution = (String) adapterView.getItemAtPosition(position);
+                    String[] tmp = resolution.split("x");
+                    if (tmp != null && tmp.length >= 2) {
+                        int widht = Integer.valueOf(tmp[0]);
+                        int height = Integer.valueOf(tmp[1]);
+                        mMyCamera.updateResolution(widht, height);
+                    }
+                    mDialog.dismiss();
+                } else if (type == 2) {
+                    if (!mMyCamera.isCameraOpened())
+                        return;
+                    mMyCamera.setDegree(position * 90);
+                    mDialog.dismiss();
+                } else if (type == 3) {
+                    if (!mMyCamera.isCameraOpened())
+                        return;
+                    mMyCamera.setMirror(position == 0);
+                    mDialog.dismiss();
                 }
-                mDialog.dismiss();
+
             }
         });
 
@@ -259,6 +293,10 @@ public class CameraFragment extends Fragment implements RadioGroup.OnCheckedChan
         mDialog.show();
     }
 
+    private void destroyDialog() {
+        if (mDialog != null) mDialog.dismiss();
+        mDialog = null;
+    }
 
     private void switchCamare() {
         index++;

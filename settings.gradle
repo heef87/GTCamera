@@ -1,2 +1,2 @@
-include ':app', ':libusbcamera'
+include ':app', ':libusbcamera', ':libyuv'
 rootProject.name='GTCamera'
