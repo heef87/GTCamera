@@ -201,12 +201,10 @@ public class UVCCameraHelper {
     }
 
     public void setMirror(boolean isMirror) {
-        mCamView.setMirror(isMirror);
         updateConfig(previewWidth, previewHeight, mDegree, isMirror);
     }
 
     public void setDegree(int degree) {
-        mCamView.setDegree(degree);
         updateConfig(previewWidth, previewHeight, degree, isMirror);
     }
 
@@ -223,6 +221,8 @@ public class UVCCameraHelper {
                 && mDegree == degree && isMirror == this.isMirror) {
             return;
         }
+        mCamView.setMirror(isMirror);
+        mCamView.setDegree(degree);
         mDegree = degree;
         this.isMirror = isMirror;
         this.previewWidth = width;
