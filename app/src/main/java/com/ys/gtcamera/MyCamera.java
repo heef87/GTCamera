@@ -27,10 +27,12 @@ public class MyCamera implements CameraViewInterface.Callback {
     private boolean isRequest;
     private boolean isPreview;
     private Activity mActivity;
+    private String usbDevName;
     private UVCCameraHelper.OnMyDevConnectListener listener = new UVCCameraHelper.OnMyDevConnectListener() {
 
         @Override
         public void onAttachDev(UsbDevice device) {
+            usbDevName = device.getDeviceName();
             if (!isRequest) {
                 isRequest = true;
                 if (mCameraHelper != null) {
@@ -41,6 +43,8 @@ public class MyCamera implements CameraViewInterface.Callback {
 
         @Override
         public void onDettachDev(UsbDevice device) {
+            if (!device.getDeviceName().equals(usbDevName))
+                return;
             if (isRequest) {
                 isRequest = false;
                 mCameraHelper.closeCamera();
@@ -180,7 +184,7 @@ public class MyCamera implements CameraViewInterface.Callback {
             RecordParams params = new RecordParams();
             params.setRecordPath(CameraStoreger.getVideoPath() + File.separator + System.currentTimeMillis());
             params.setRecordDuration(0);
-            params.setVoiceClose(true);
+//            params.setVoiceClose(true);
             mCameraHelper.startPusher(params, new AbstractUVCCameraHandler.OnEncodeResultListener() {
                 @Override
                 public void onEncodeResult(byte[] data, int offset, int length, long timestamp, int type) {
