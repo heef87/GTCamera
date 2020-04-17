@@ -34,6 +34,7 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 
+import com.jiangdg.usbcamera.utils.ScreentUtils;
 import com.serenegiant.glutils.EGLBase;
 import com.serenegiant.glutils.GLDrawer2D;
 import com.serenegiant.glutils.es1.GLHelper;
@@ -188,12 +189,15 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
     @Override
     public void setDegree(int degree) {
         setRotation(degree);
-        setAspectRatio(getWidth()/getHeight());
+        setAspectRatio(getWidth() / getHeight());
     }
 
     @Override
     public void setMirror(boolean isMirror) {
-        setScaleX(isMirror ? -1 : 1);
+        if (ScreentUtils.isPort())
+            setScaleY(isMirror ? -1 : 1);
+        else
+            setScaleX(isMirror ? -1 : 1);
     }
 
     @Override
