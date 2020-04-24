@@ -398,6 +398,7 @@ public abstract class AbstractUVCCameraHandler extends Handler {
         private final int mEncoderType;
         private final Set<CameraCallback> mCallbacks = new CopyOnWriteArraySet<CameraCallback>();
         private int mWidth, mHeight, mPreviewMode;
+        private int cWidth, cHeight;
         private int mDegree;//旋转的角度，90，180和270三种。切记，如果角度是90或270，则最终i420Dst数据的宽高会调换。
         private boolean isMirror;
         private float mBandwidthFactor;
@@ -445,6 +446,8 @@ public abstract class AbstractUVCCameraHandler extends Handler {
             mEncoderType = encoderType;
             mWidth = width;
             mHeight = height;
+            cWidth = mWidth;
+            cHeight = mHeight;
             mPreviewMode = format;
             mBandwidthFactor = bandwidthFactor;
             mWeakParent = new WeakReference<>(parent);
@@ -472,13 +475,13 @@ public abstract class AbstractUVCCameraHandler extends Handler {
 
         public int getWidth() {
             synchronized (mSync) {
-                return mWidth;
+                return cWidth;
             }
         }
 
         public int getHeight() {
             synchronized (mSync) {
-                return mHeight;
+                return cHeight;
             }
         }
 
@@ -845,17 +848,16 @@ public abstract class AbstractUVCCameraHandler extends Handler {
         }
 
         private void saveYuv2Jpeg(String path, byte[] data) {
-            byte[] nv21Data = nv12ToNV21(data, mWidth, mHeight);
+            byte[] nv21Data = nv12ToNV21(data, cWidth, cHeight);
             byte[] tempYuv = new byte[mWidth * mHeight * 3 / 2];
             boolean is90or270 = mDegree == 90 || mDegree == 270;
             boolean isPort = ScreentUtils.isPort();
             if (isPort) {
-                YuvUtil.yuvCompress(nv21Data, mWidth, mHeight, tempYuv, is90or270 ? mWidth : mHeight,
-                        is90or270 ? mHeight : mWidth, 0, mDegree, isMirror);
-                int temp = mWidth;
-                mWidth = mHeight;
-                mHeight = temp;
-            }else{
+                YuvUtil.yuvCompress(nv21Data, cWidth, cHeight, tempYuv, is90or270 ? cWidth : cHeight,
+                        is90or270 ? cHeight : cWidth, 0, mDegree, isMirror);
+                mWidth = cHeight;
+                mHeight = cWidth;
+            } else {
                 YuvUtil.yuvCompress(nv21Data, mWidth, mHeight, tempYuv, is90or270 ? mHeight : mWidth,
                         is90or270 ? mWidth : mHeight, 0, mDegree, isMirror);
             }
