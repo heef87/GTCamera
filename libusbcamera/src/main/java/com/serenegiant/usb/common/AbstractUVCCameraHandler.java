@@ -441,6 +441,9 @@ public abstract class AbstractUVCCameraHandler extends Handler {
 
             super("CameraThread");
             mDegree = degree;
+            if (isMirror && ScreentUtils.isCameraExtend()) {
+                mDegree += 270;
+            }
             this.isMirror = isMirror;
             mHandlerClass = clazz;
             mEncoderType = encoderType;

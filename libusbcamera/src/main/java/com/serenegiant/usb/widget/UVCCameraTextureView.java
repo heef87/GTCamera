@@ -194,7 +194,7 @@ public class UVCCameraTextureView extends AspectRatioTextureView    // API >= 14
 
     @Override
     public void setMirror(boolean isMirror) {
-        if (ScreentUtils.isPort())
+        if (ScreentUtils.isCameraExtend())
             setScaleY(isMirror ? -1 : 1);
         else
             setScaleX(isMirror ? -1 : 1);

@@ -1,11 +1,17 @@
 package com.jiangdg.usbcamera;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
 import android.os.Environment;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.View;
 
 import com.jiangdg.libusbcamera.R;
+import com.jiangdg.usbcamera.utils.ScreentUtils;
 import com.serenegiant.usb.DeviceFilter;
 import com.serenegiant.usb.Size;
 import com.serenegiant.usb.USBMonitor;
@@ -14,6 +20,7 @@ import com.serenegiant.usb.common.AbstractUVCCameraHandler;
 import com.serenegiant.usb.common.UVCCameraHandler;
 import com.serenegiant.usb.encoder.RecordParams;
 import com.serenegiant.usb.widget.CameraViewInterface;
+import com.serenegiant.usb.widget.UVCCameraTextureView;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -34,7 +41,7 @@ public class UVCCameraHelper {
     private int previewWidth = 640;
     private int previewHeight = 480;
     private int mDegree = 0;
-    private boolean isMirror = false;
+    private boolean isMirror = true;
     public static final int FRAME_FORMAT_YUYV = UVCCamera.FRAME_FORMAT_YUYV;
     // Default using MJPEG
     // if your device is connected,but have no images
@@ -53,7 +60,7 @@ public class UVCCameraHelper {
 
     private Activity mActivity;
     private CameraViewInterface mCamView;
-    private int mRotation = 0; //0,90,180,270
+    private int cameraIndex = 0;
 
     private UVCCameraHelper() {
     }
@@ -94,6 +101,7 @@ public class UVCCameraHelper {
     public void initUSBMonitor(Activity activity, CameraViewInterface cameraView, final OnMyDevConnectListener listener) {
         this.mActivity = activity;
         this.mCamView = cameraView;
+        ScreentUtils.init(activity);
         mUSBMonitor = new USBMonitor(activity.getApplicationContext(), new USBMonitor.OnDeviceConnectListener() {
 
             // called by checking usb device
@@ -120,6 +128,12 @@ public class UVCCameraHelper {
             public void onConnect(final UsbDevice device, USBMonitor.UsbControlBlock ctrlBlock, boolean createNew) {
                 mCtrlBlock = ctrlBlock;
                 openCamera(ctrlBlock);
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ((UVCCameraTextureView) mCamView).setVisibility(View.INVISIBLE);
+                    }
+                });
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -131,6 +145,24 @@ public class UVCCameraHelper {
                         }
                         // start previewing
                         startPreview(mCamView);
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                ((UVCCameraTextureView) mCamView).setVisibility(View.VISIBLE);
+                                int[] cacheResolution = ScreentUtils.getCacheResolution(mActivity);
+                                if(cacheResolution != null){
+                                    updateResolution(cacheResolution[0],cacheResolution[1]);
+                                }else{
+                                    Size maxSize = getMaxSupportedPreviewSize();
+                                    updateResolution(maxSize.width, maxSize.height);
+                                }
+                            }
+                        });
                     }
                 }).start();
                 if (listener != null) {
@@ -153,6 +185,21 @@ public class UVCCameraHelper {
         });
 
         createUVCCamera();
+    }
+
+    private Size getMaxSupportedPreviewSize() {
+        List<Size> sp = getSupportedPreviewSizes();
+        if (sp == null || sp.size() <= 0) return null;
+        long maxSize = sp.get(0).width * sp.get(0).height;
+        Size max = null;
+        for (int i = 0; i < sp.size(); i++) {
+            long curSize = sp.get(i).width * sp.get(i).height;
+            if (curSize > maxSize) {
+                maxSize = curSize;
+                max = sp.get(i);
+            }
+        }
+        return max;
     }
 
     public void setCameraRotation(int rotation) {
@@ -193,27 +240,37 @@ public class UVCCameraHelper {
             mCameraHandler.release();
             mCameraHandler = null;
         }
-
         // initialize camera handler
         mCamView.setAspectRatio(previewWidth / (float) previewHeight);
+        if(cameraIndex == 0){
+            isMirror = ScreentUtils.isBackCameraMirror();
+        }else{
+            isMirror = ScreentUtils.isFrontCameraMirror();
+        }
+        mDegree = ScreentUtils.getCameraRotation();
+        ((UVCCameraTextureView) mCamView).setRotation(mDegree);
+        mCamView.setMirror(isMirror);
         mCameraHandler = UVCCameraHandler.createHandler(mActivity, mCamView, 2,
                 previewWidth, previewHeight, mDegree, isMirror, mFrameFormat);
     }
 
     public void setMirror(boolean isMirror) {
-        updateConfig(previewWidth, previewHeight, mDegree, isMirror);
+//        updateConfig(previewWidth, previewHeight, mDegree, isMirror);
     }
 
     public void setDegree(int degree) {
-        updateConfig(previewWidth, previewHeight, degree, isMirror);
-    }
-
-    public void setDegreeAndMirror(int degree, boolean isMirror) {
-        updateConfig(previewWidth, previewHeight, degree, isMirror);
+//        if (ScreentUtils.isPort()) {
+//            if (degree == 0) degree = 90;
+//            else if (degree == 90) degree = 180;
+//            else if (degree == 180) degree = 270;
+//            else if (degree == 270) degree = 0;
+//        }
+//        updateConfig(previewWidth, previewHeight, degree, isMirror);
     }
 
     public void updateResolution(int width, int height) {
         updateConfig(width, height, mDegree, isMirror);
+        ScreentUtils.setCacheResolution(mActivity,width,height);
     }
 
     public void updateConfig(int width, int height, int degree, boolean isMirror) {
@@ -221,8 +278,6 @@ public class UVCCameraHelper {
                 && mDegree == degree && isMirror == this.isMirror) {
             return;
         }
-        mCamView.setMirror(isMirror);
-        mCamView.setDegree(degree);
         mDegree = degree;
         this.isMirror = isMirror;
         this.previewWidth = width;
@@ -231,6 +286,8 @@ public class UVCCameraHelper {
             mCameraHandler.release();
             mCameraHandler = null;
         }
+        mCamView.setMirror(isMirror);
+        mCamView.setDegree(degree);
         mCamView.setAspectRatio(previewWidth / (float) previewHeight);
         mCameraHandler = UVCCameraHandler.createHandler(mActivity, mCamView, 2,
                 previewWidth, previewHeight, mDegree, isMirror, mFrameFormat);
@@ -287,6 +344,7 @@ public class UVCCameraHelper {
         if (index >= count)
             new IllegalArgumentException("index illegal,should be < devList.size()");
         if (mUSBMonitor != null) {
+            cameraIndex = index;
             mUSBMonitor.requestPermission(getUsbDeviceList().get(index));
         }
     }

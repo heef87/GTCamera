@@ -145,8 +145,9 @@ public class CameraFragment extends Fragment implements RadioGroup.OnCheckedChan
     @Override
     public void onClick(View view) {
         if (view == mOptionButton) {
-            List<String> list = Arrays.asList("分辨率", "旋转角度", "镜像");
-            showResolutionListDialog(list, 0);
+//            List<String> list = Arrays.asList("分辨率", "旋转角度", "镜像");
+//            showResolutionListDialog(list, 0);
+            showResolutionListDialog(mMyCamera.getResolutionList(), 1);
         } else if (view == mSwitchButton) {
             switchCamare();
         } else if (view == mActionButton) {
