@@ -8,6 +8,7 @@ import android.media.MediaFormat;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.jiangdg.usbcamera.utils.ScreentUtils;
@@ -60,11 +61,12 @@ public class H264EncodeConsumer extends Thread {
     public void setOnH264EncodeResultListener(OnH264EncodeResultListener listener) {
         this.listener = listener;
     }
+
     public H264EncodeConsumer(int width, int height) {
-      this(width,height,0,false);
+        this(width, height, 0, false);
     }
 
-    public H264EncodeConsumer(int width, int height,int degree,boolean isMirror) {
+    public H264EncodeConsumer(int width, int height, int degree, boolean isMirror) {
         this.mWidth = width;
         this.mHeight = height;
         mDegree = degree;
@@ -110,12 +112,12 @@ public class H264EncodeConsumer extends Thread {
                 int temp = mWidth;
                 mWidth = mHeight;
                 mHeight = temp;
-            }else{
+            } else {
                 YuvUtil.yuvCompress(yuvData, mWidth, mHeight, dstData, is90or270 ? mHeight : mWidth,
                         is90or270 ? mWidth : mHeight, 0, mDegree, isMirror);
             }
             byte[] nv21Data = new byte[yuvData.length];
-            YuvUtil.yuvI420ToNV21(dstData,mWidth,mHeight,nv21Data);
+            YuvUtil.yuvI420ToNV21(dstData, mWidth, mHeight, nv21Data);
             feedMediaCodecData(nv21Data);
             if (time > 0)
                 Thread.sleep(time / 2);
@@ -155,9 +157,15 @@ public class H264EncodeConsumer extends Thread {
     @SuppressLint("WrongConstant")
     @Override
     public void run() {
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e1) {
+            e1.printStackTrace();
+        }
         if (!isEncoderStart) {
             startMediaCodec();
         }
+
         // 休眠200ms，等待音频线程开启
         // 否则视频第一秒会卡住
         try {
@@ -266,7 +274,7 @@ public class H264EncodeConsumer extends Thread {
             return;
         }
         boolean isPort = ScreentUtils.isPort();
-        final MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE,isPort?mHeight:mWidth, isPort?mWidth:mHeight);
+        final MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, isPort ? mHeight : mWidth, isPort ? mWidth : mHeight);
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, mColorFormat);
         format.setInteger(MediaFormat.KEY_BIT_RATE, calcBitRate());
         format.setInteger(MediaFormat.KEY_FRAME_RATE, 50);
@@ -453,14 +461,14 @@ public class H264EncodeConsumer extends Thread {
 
     // YYYYYYYY UVUV(nv21)--> YYYYYYYY VUVU(nv12)
     private byte[] nv21ToNV12(byte[] nv21, int width, int height) {
-        byte[] ret = new byte[width * height * 3 /2];
+        byte[] ret = new byte[width * height * 3 / 2];
         int framesize = width * height;
         int i = 0, j = 0;
         // 拷贝Y分量
-        System.arraycopy(nv21, 0,ret , 0, framesize);
+        System.arraycopy(nv21, 0, ret, 0, framesize);
         // 拷贝UV分量
         for (j = framesize; j < nv21.length; j += 2) {
-            ret[j+1] = nv21[j+1];
+            ret[j + 1] = nv21[j + 1];
             ret[j] = nv21[j];
         }
         return ret;
@@ -468,15 +476,15 @@ public class H264EncodeConsumer extends Thread {
 
     // YYYYYYYY UVUV(nv12)--> YYYYYYYY VUVU(nv21)
     private byte[] nv12ToNV21(byte[] nv12, int width, int height) {
-        byte[] ret = new byte[width * height * 3 /2];
+        byte[] ret = new byte[width * height * 3 / 2];
         int framesize = width * height;
         int i = 0, j = 0;
         // 拷贝Y分量
-        System.arraycopy(nv12, 0,ret , 0, framesize);
+        System.arraycopy(nv12, 0, ret, 0, framesize);
         // 拷贝UV分量
         for (j = framesize; j < nv12.length; j += 2) {
-            ret[j] = nv12[j+1];
-            ret[j+1] = nv12[j];
+            ret[j] = nv12[j + 1];
+            ret[j + 1] = nv12[j];
         }
         return ret;
     }
