@@ -1,0 +1,11 @@
+/app/app.iml
+/libusbcamera/libusbcamera.iml
+/libyuv/libyuv.iml
+/GTCamera.iml
+/how
+/local.properties
+/.gradle/
+/.idea/
+/app/build/
+/libusbcamera/build/
+/libyuv/.cxx/
