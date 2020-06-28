@@ -6,11 +6,14 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
 
+import com.serenegiant.usb.Size;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * Created by Administrator on 2017/12/18.
@@ -39,6 +42,7 @@ public class ScreentUtils {
     /**
      * 检测相机旋转方向是否处于指定拓展模式
      * （当屏幕处于竖屏状态 相机旋转选择90°或者270°）
+     *
      * @return
      */
     public static boolean isCameraExtend() {
@@ -101,27 +105,58 @@ public class ScreentUtils {
 
     /**
      * 缓存当前相机宽高
+     *
      * @param context
      * @param width
      * @param height
      */
-    public static void setCacheResolution(Context context,int width, int height) {
+    public static void setCacheResolution(Context context, int width, int height) {
         SharedPreferences sp = context.getSharedPreferences("cache_rlt", Context.MODE_PRIVATE);
         sp.edit().putString("_rlt", width + "x" + height).commit();
     }
 
     /**
      * 获取缓存相机宽高
+     *
      * @param context
+     * @param sizeList
      * @return int[]{width，height}；
      */
-    public static int[] getCacheResolution(Context context) {
+    public static Size getCacheResolution(Context context, List<Size> sizeList) {
         SharedPreferences sp = context.getSharedPreferences("cache_rlt", Context.MODE_PRIVATE);
         String rlt = sp.getString("_rlt", "");
-        if(TextUtils.isEmpty(rlt)) return null;
+        Size maxSize = getMaxSupportedPreviewSize(sizeList);
+        if (TextUtils.isEmpty(rlt) || maxSize == null) return maxSize;
         String[] xes = rlt.split("x");
-        return new int[]{Integer.parseInt(xes[0]),Integer.parseInt(xes[1])};
+        int width = Integer.parseInt(xes[0]);
+        int height = Integer.parseInt(xes[1]);
+        boolean rotaExits = false;
+        for (Size sz : sizeList) {
+            if (sz.width == width && sz.height == height) {
+                rotaExits = true;
+                break;
+            }
+        }
+        if (rotaExits)
+            return new Size(0, 0, 0, width, height);
+        else
+            return maxSize;
     }
+
+    private static Size getMaxSupportedPreviewSize(List<Size> sp) {
+        if (sp == null || sp.size() <= 0) return null;
+        long maxSize = sp.get(0).width * sp.get(0).height;
+        Size max = sp.get(0);
+        for (int i = 0; i < sp.size(); i++) {
+            long curSize = sp.get(i).width * sp.get(i).height;
+            if (curSize > maxSize) {
+                maxSize = curSize;
+                max = sp.get(i);
+            }
+        }
+        return max;
+    }
+
     public static String execCommand(String command) {
         try {
         } catch (Exception e) {

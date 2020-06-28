@@ -154,12 +154,10 @@ public class UVCCameraHelper {
                             @Override
                             public void run() {
                                 ((UVCCameraTextureView) mCamView).setVisibility(View.VISIBLE);
-                                int[] cacheResolution = ScreentUtils.getCacheResolution(mActivity);
-                                if(cacheResolution != null){
-                                    updateResolution(cacheResolution[0],cacheResolution[1]);
-                                }else{
-                                    Size maxSize = getMaxSupportedPreviewSize();
-                                    updateResolution(maxSize.width, maxSize.height);
+                                List<Size> sizeList = getSupportedPreviewSizes();
+                                Size size = ScreentUtils.getCacheResolution(mActivity, sizeList);
+                                if (size != null) {
+                                    updateResolution(size.width, size.height);
                                 }
                             }
                         });
@@ -185,21 +183,6 @@ public class UVCCameraHelper {
         });
 
         createUVCCamera();
-    }
-
-    private Size getMaxSupportedPreviewSize() {
-        List<Size> sp = getSupportedPreviewSizes();
-        if (sp == null || sp.size() <= 0) return null;
-        long maxSize = sp.get(0).width * sp.get(0).height;
-        Size max = null;
-        for (int i = 0; i < sp.size(); i++) {
-            long curSize = sp.get(i).width * sp.get(i).height;
-            if (curSize > maxSize) {
-                maxSize = curSize;
-                max = sp.get(i);
-            }
-        }
-        return max;
     }
 
     public void setCameraRotation(int rotation) {
@@ -242,9 +225,9 @@ public class UVCCameraHelper {
         }
         // initialize camera handler
         mCamView.setAspectRatio(previewWidth / (float) previewHeight);
-        if(cameraIndex == 0){
+        if (cameraIndex == 0) {
             isMirror = ScreentUtils.isBackCameraMirror();
-        }else{
+        } else {
             isMirror = ScreentUtils.isFrontCameraMirror();
         }
         mDegree = ScreentUtils.getCameraRotation();
@@ -270,7 +253,7 @@ public class UVCCameraHelper {
 
     public void updateResolution(int width, int height) {
         updateConfig(width, height, mDegree, isMirror);
-        ScreentUtils.setCacheResolution(mActivity,width,height);
+        ScreentUtils.setCacheResolution(mActivity, width, height);
     }
 
     public void updateConfig(int width, int height, int degree, boolean isMirror) {
